@@ -1,0 +1,199 @@
+# ===========================================
+#  UBER FARE PREDICTION PROJECT
+#  Description: Predicting Uber fares using ML
+# ===========================================
+
+# ---- Importing Libraries ----
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+from math import radians, sin, cos, asin, sqrt
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import RandomForestRegressor
+from sklearn import metrics
+
+
+# ---- 1. Read Data ----
+def read_data(path: str) -> pd.DataFrame:
+    """Read data from CSV file."""
+    df = pd.read_csv(path)
+    return df
+
+
+# ---- 2. Basic Info ----
+def basic_info(df: pd.DataFrame):
+    """Display basic info of the dataset."""
+    return df.info()
+
+
+# ---- 3. Distance Calculation (Haversine Formula) ----
+def distance_transform(longitude1: np.ndarray, latitude1: np.ndarray,
+                       longitude2: np.ndarray, latitude2: np.ndarray) -> list:
+    """Calculate distance between two geographical points."""
+    distance = []
+    for pos in range(len(longitude1)):
+        long1, lati1, long2, lati2 = map(radians, [
+            longitude1[pos], latitude1[pos],
+            longitude2[pos], latitude2[pos]
+        ])
+        dist_long = long2 - long1
+        dist_lati = lati2 - lati1
+        a = sin(dist_lati / 2) ** 2 + cos(lati1) * cos(lati2) * sin(dist_long / 2) ** 2
+        c = 2 * asin(sqrt(a)) * 6371  # 6371 km = Earth radius
+        distance.append(c)
+    return distance
+
+
+# ---- 4. Outlier Detection ----
+def find_outliers(df: pd.DataFrame) -> pd.DataFrame:
+    """Find outliers using IQR method."""
+    q1 = df.quantile(0.25)
+    q3 = df.quantile(0.75)
+    IQR = q3 - q1
+    outliers = df[((df < (q1 - 1.5 * IQR)) | (df > (q3 + 1.5 * IQR)))]
+    return outliers
+
+
+# ---- 5. Preprocessing ----
+def preprocess(df: pd.DataFrame) -> pd.DataFrame:
+    """Clean and preprocess the dataset."""
+    # Remove unwanted columns
+    df = df.drop(["Unnamed: 0", "key"], axis=1)
+
+    # Convert pickup_datetime to datetime format
+    df["pickup_datetime"] = pd.to_datetime(df["pickup_datetime"], errors="coerce")
+
+    # Remove null values
+    df = df.dropna()
+
+    # Calculate distance using Haversine formula
+    df["distance_km"] = distance_transform(
+        df["pickup_longitude"].to_numpy(),
+        df["pickup_latitude"].to_numpy(),
+        df["dropoff_longitude"].to_numpy(),
+        df["dropoff_latitude"].to_numpy()
+    )
+
+    # Extract datetime features
+    df = df.assign(
+        pickup_hr=df.pickup_datetime.dt.hour,
+        day=df.pickup_datetime.dt.day,
+        month=df.pickup_datetime.dt.month,
+        year=df.pickup_datetime.dt.year,
+        day_of_week=df.pickup_datetime.dt.dayofweek,
+        day_name=df.pickup_datetime.dt.day_name()
+    )
+
+    # Outlier analysis
+    outliers = find_outliers(df['fare_amount'])
+    print(f"Number of fare outliers: {len(outliers)}")
+    print(f"Max fare outlier: {outliers.max()}")
+    print(f"Min fare outlier: {outliers.min()}\n")
+
+    outliers = find_outliers(df['passenger_count'])
+    print(f"Number of passenger count outliers: {len(outliers)}")
+    print(f"Max passenger count outlier: {outliers.max()}")
+    print(f"Min passenger count outlier: {outliers.min()}\n")
+
+    # Remove invalid/unrealistic values
+    df.drop(df[df['distance_km'] == 0].index, inplace=True)
+    df.drop(df[df['distance_km'] > 60].index, inplace=True)
+    df.drop(df[df['fare_amount'] > 100].index, inplace=True)
+    df.drop(df[df['fare_amount'] < 0].index, inplace=True)
+    df.drop(df[df['passenger_count'] > 6].index, inplace=True)
+
+    return df
+
+
+# ---- 6. Visualization ----
+def visualize_correlation(df: pd.DataFrame) -> None:
+    """Plot correlation heatmap for numeric columns."""
+    plt.figure(figsize=(10, 7))
+    sns.heatmap(df.select_dtypes(include=['number']).corr(),
+                annot=True, cmap='coolwarm')
+    plt.title("Correlation Heatmap (Numeric Columns)")
+    plt.show()
+
+
+# ---- 7. Data Splitting ----
+def split_data(df: pd.DataFrame) -> tuple:
+    """Split data into training and testing sets."""
+    x = df[["year", "distance_km"]]
+    y = df["fare_amount"]
+
+    scaler = StandardScaler()
+    x = scaler.fit_transform(x)
+
+    x_train, x_test, y_train, y_test = train_test_split(
+        x, y, test_size=0.3, random_state=42
+    )
+    return x_train, x_test, y_train, y_test
+
+
+# ---- 8. Model Creation ----
+def create_model(model_name: str):
+    """Create machine learning model."""
+    if model_name == "LR":
+        model = LinearRegression()
+    elif model_name == "RFR":
+        model = RandomForestRegressor()
+    else:
+        raise ValueError("Invalid model name! Use 'LR' or 'RFR'.")
+    return model
+
+
+# ---- 9. Model Training ----
+def train_model(model, x_train, y_train) -> None:
+    """Train the model."""
+    model.fit(x_train, y_train)
+
+
+# ---- 10. Model Testing ----
+def test_model(model, x_test) -> np.ndarray:
+    """Predict test data."""
+    y_pred = model.predict(x_test)
+    return y_pred
+
+
+# ---- 11. Regression Line ----
+def reg_line(y_test, y_pred) -> None:
+    """Plot regression line of actual vs predicted fares."""
+    sns.regplot(x=y_test, y=y_pred, color="red", line_kws={"color": "blue"})
+    plt.title("Actual vs Predicted Fares")
+    plt.show()
+
+
+# ---- 12. Model Metrics ----
+def metrics_model(y_test, y_pred) -> None:
+    """Evaluate model performance."""
+    print(f"Mean Absolute Error: {metrics.mean_absolute_error(y_test, y_pred):.2f}")
+    print(f"Mean Squared Error: {metrics.mean_squared_error(y_test, y_pred):.2f}")
+    print(f"Root Mean Squared Error: {np.sqrt(metrics.mean_squared_error(y_test, y_pred)):.2f}")
+
+
+# ---- MAIN EXECUTION ----
+if __name__ == "__main__":
+    df = read_data("/kaggle/input/uber-fares-dataset/uber.csv")
+    print("\n--- BASIC INFORMATION ---")
+    print(basic_info(df))
+
+    print("\n--- PREPROCESSING DATA ---")
+    df = preprocess(df)
+
+    print("\n--- CORRELATION MATRIX ---")
+    visualize_correlation(df)
+
+    x_train, x_test, y_train, y_test = split_data(df)
+
+    model = create_model("LR")   # or "RFR" for Random Forest
+    train_model(model, x_train, y_train)
+    y_pred = test_model(model, x_test)
+
+    print("\n--- REGRESSION LINE ---")
+    reg_line(y_test, y_pred)
+
+    print("\n--- MODEL PERFORMANCE ---")
+    metrics_model(y_test, y_pred)
