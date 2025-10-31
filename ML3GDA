@@ -1,0 +1,57 @@
+
+import numpy as np
+import sympy as sp
+import matplotlib.pyplot as plt
+
+def derivative(func, var):
+    """
+    Computes the symbolic derivative of a function with respect to a given variable.
+    
+    Parameters:
+    func : SymPy expression
+        The function whose derivative we want to compute.
+    var : SymPy symbol
+        The variable with respect to which we want the derivative.
+    
+    Returns:
+    SymPy expression : The symbolic derivative of the function.
+    """
+    return sp.diff(func, var)
+
+def gradient_descent(func, grad, x_start, learning_rate, epochs):
+    minima_x = x_start
+    x_history = []
+    y_history = []
+
+    print(f"Initial Values: x = {minima_x}, f(x) = {func.subs(x, minima_x)}")
+
+    for i in range(epochs):
+        grad_val = grad.subs(x, minima_x)
+        minima_x = minima_x - learning_rate * grad_val
+        x_history.append(minima_x)
+        y_history.append(func.subs(x, minima_x))
+
+    return minima_x, func.subs(x, minima_x), x_history, y_history
+
+x = sp.symbols('x')
+y = (x + 3)**2
+gradient = derivative(y, x)
+
+x0 = 2           # starting point
+lr = 0.1         # learning rate
+epochs = 50      # number of iterations
+
+minima_x, minima_y, x_history, y_history = gradient_descent(y, gradient, x0, lr, epochs)
+
+# ---- Step 6: Print results ----
+print("\nLocal minima found at:")
+print(f"x = {float(minima_x):.6f}, y = {float(minima_y):.6e}")
+
+plt.figure(figsize=(10, 6))
+plt.scatter(x_history, y_history)
+plt.plot(x_history, y_history)
+plt.scatter(x_history[-1], y_history[-1], c='green')
+plt.title('Gradient Descent')
+plt.xlabel('X')
+plt.ylabel('f(X)')
+plt.show()
