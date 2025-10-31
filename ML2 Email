@@ -1,0 +1,147 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from google.colab import files
+uploaded = files.upload()
+
+pd.set_option('display.max_columns', None)
+emails = pd.read_csv('emails.csv')
+emails.head()
+
+emails.shape
+
+emails.isna().sum()
+
+emails['Prediction'].value_counts(normalize=True)
+
+from sklearn.model_selection import train_test_split
+
+# Split features and target
+X = emails.iloc[:, 1:-1]      # All columns except first and last
+y = emails["Prediction"]      # Target column
+
+# Split dataset into 80% training and 20% testing
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Show dataset shapes
+print("Training Data Shapes:")
+print("X_train:", X_train.shape)
+print("y_train:", y_train.shape)
+
+print("\nTesting Data Shapes:")
+print("X_test:", X_test.shape)
+print("y_test:", y_test.shape)
+
+from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+#Dimensionality Reduction using PCA
+
+from sklearn.decomposition import PCA
+import time
+start = time.time()
+pca = PCA(n_components=None)
+X_train_trf = pca.fit_transform(X_train_scaled)
+X_test_trf = pca.transform(X_test_scaled)
+print(time.time() - start)
+plt.figure(figsize=(8, 5))
+plt.plot(
+    range(1, X_train_trf.shape[1] + 1),
+    np.cumsum(pca.explained_variance_ratio_),
+    color='blue'
+)
+
+plt.title("Cumulative Explained Variance by PCA Components")
+plt.xlabel("Number of Principal Components")
+plt.ylabel("Cumulative Explained Variance Ratio")
+
+# Set y-axis ticks (0.0 to 1.0 in steps of 0.1)
+plt.yticks(ticks=[i/10 for i in range(0, 11)], labels=[i/10 for i in range(0, 11)])
+
+plt.grid()
+plt.show()
+
+# Step 1: Calculate cumulative explained variance
+explained_variance_cumsum = np.cumsum(pca.explained_variance_ratio_)
+
+# Step 2: Create DataFrame for visualization and filtering
+explained_variance_cumsum_df = pd.DataFrame({
+    'principal_component': [i + 1 for i in range(len(explained_variance_cumsum))],
+    'explained_variance_cumsum': explained_variance_cumsum
+})
+
+# Step 3: Display the number of components needed for 90% variance
+target_variance = 0.90
+components_needed = explained_variance_cumsum_df[
+    explained_variance_cumsum_df['explained_variance_cumsum'] >= target_variance
+].head(1)
+
+print(" Components needed to retain at least 90% variance:")
+print(components_needed)
+
+# Optional: Display first few rows for reference
+print("\nPreview of cumulative variance DataFrame:")
+print(explained_variance_cumsum_df.head())
+
+start = time.time()
+pca = PCA(n_components=711)
+X_train_trf = pca.fit_transform(X_train_scaled)
+X_test_trf = pca.transform(X_test_scaled)
+print(time.time() - start)
+
+#KNN Classification
+
+# Import necessary modules
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score, precision_score, recall_score, confusion_matrix
+
+# Create and train the KNN model
+knn = KNeighborsClassifier(n_neighbors=5)   # You can change k value if needed
+knn.fit(X_train_trf, y_train)
+
+# Make predictions on test data
+y_pred_knn = knn.predict(X_test_trf)
+
+# Evaluate model performance
+accuracy = accuracy_score(y_test, y_pred_knn)
+precision = precision_score(y_test, y_pred_knn)
+recall = recall_score(y_test, y_pred_knn)
+cm = confusion_matrix(y_test, y_pred_knn)
+
+# Print results
+print(" KNN Model Evaluation:")
+print(f"Accuracy  : {accuracy:.4f}")
+print(f"Precision : {precision:.4f}")
+print(f"Recall    : {recall:.4f}")
+print("\nConfusion Matrix:\n", cm)
+
+#SVM Classification
+
+# Import the SVM model and evaluation metrics
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score, precision_score, recall_score, confusion_matrix
+
+# Step 1: Create the SVM model
+svc = SVC(kernel='rbf', C=1.0, gamma='scale') 
+svc.fit(X_train_trf, y_train)
+
+# Step 2: Make predictions on the test data
+y_pred_svc = svc.predict(X_test_trf)
+
+# Step 3: Evaluate the model performance
+accuracy = accuracy_score(y_test, y_pred_svc)
+precision = precision_score(y_test, y_pred_svc)
+recall = recall_score(y_test, y_pred_svc)
+cm = confusion_matrix(y_test, y_pred_svc)
+
+# Step 4: Display the results
+print(" SVM Model Evaluation:")
+print(f"Accuracy  : {accuracy:.4f}")
+print(f"Precision : {precision:.4f}")
+print(f"Recall    : {recall:.4f}")
+print("\nConfusion Matrix:\n", cm)
+
