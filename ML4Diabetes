@@ -1,0 +1,61 @@
+
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score
+
+
+from google.colab import files
+uploaded = files.upload()
+
+df = pd.read_csv("diabetes.csv")
+print(" Dataset Loaded Successfully\n")
+
+print("Shape of dataset:", df.shape)
+print("\nFirst 5 Rows:\n", df.head())
+
+# ---- Step 2: Check for missing values ----
+print("\nMissing Values:\n", df.isnull().sum())
+
+X = df.drop("Outcome", axis=1)   
+y = df["Outcome"] 
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42)
+print(f"\nTraining Data: {X_train.shape}, Testing Data: {X_test.shape}")
+
+
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+knn = KNeighborsClassifier(n_neighbors=5)  
+knn.fit(X_train_scaled, y_train)
+
+
+y_pred = knn.predict(X_test_scaled)
+
+
+cm = confusion_matrix(y_test, y_pred)
+accuracy = accuracy_score(y_test, y_pred)
+precision = precision_score(y_test, y_pred)
+recall = recall_score(y_test, y_pred)
+error_rate = 1 - accuracy
+
+print("\n Model Evaluation Results:")
+print("Confusion Matrix:\n", cm)
+print(f"\nAccuracy      : {accuracy:.4f}")
+print(f"Error Rate    : {error_rate:.4f}")
+print(f"Precision     : {precision:.4f}")
+print(f"Recall        : {recall:.4f}")
+
+
+plt.figure(figsize=(6,4))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=False)
+plt.title("KNN Confusion Matrix - Diabetes Prediction")
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.show()
