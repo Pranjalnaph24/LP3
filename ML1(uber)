@@ -140,6 +140,42 @@ plt.title("Actual vs Predicted Fares Comparison")
 plt.legend()
 plt.show()
 
+# plt.figure(figsize=(6,4))
+# plt.scatter(y_test, y_pred_lr)
+# plt.xlabel("Actual Fare")
+# plt.ylabel("Predicted Fare")
+# plt.title("Actual vs Predicted (Linear Regression)")
+# plt.show()
+
+# plt.figure(figsize=(6,4))
+# plt.scatter(y_test, y_pred_rf)
+# plt.xlabel("Actual Fare")
+# plt.ylabel("Predicted Fare")
+# plt.title("Actual vs Predicted (Random Forest)")
+# plt.show()
+
+
+
+# plt.figure(figsize=(7,4))
+# plt.scatter(range(len(y_test)), y_test, color='red', label='Actual Fare', s=18)
+# plt.scatter(range(len(y_test)), y_pred_lr, color='blue', label='Predicted Fare', s=18)
+# plt.ylim(0, 25)   
+# plt.xlabel("Sample Index")
+# plt.ylabel("Fare Amount")
+# plt.title("Actual vs Predicted (Linear Regression) - Same Scale")
+# plt.legend()
+# plt.show()
+
+
+# plt.figure(figsize=(7,4))
+# plt.scatter(range(len(y_test)), y_test, color='red', label='Actual Fare', s=18)
+# plt.scatter(range(len(y_test)), y_pred_rf, color='green', label='Predicted Fare', s=18)
+# plt.ylim(0, 25)   
+# plt.xlabel("Sample Index")
+# plt.ylabel("Fare Amount")
+# plt.title("Actual vs Predicted (Random Forest) - Same Scale")
+# plt.legend()
+# plt.show()
 
 
 
