@@ -48,6 +48,22 @@ def nQueen(n):
     cur = []
     board = [['.' for _ in range(n)] for _ in range(n)]
 
+    #row, col = 0, 0
+    # board[row][col] = 'Q'
+    # cols[col] = 1
+    # rightDiagonal[row + col] = 1
+    # leftDiagonal[row - col + n - 1] = 1
+    # cur.append(col)
+
+    # print("Initial Board with first Queen placed:\n")
+    # printBoard(board)
+    # time.sleep(0.5)
+
+    # # Start backtracking from the *next* row
+    # if not placeQueens(row + 1, cols, leftDiagonal, rightDiagonal, cur, board):
+    #     print("❌ No solution exists.")
+
+
     print("Starting N-Queen Backtracking Steps:\n")
     if not placeQueens(0, cols, leftDiagonal, rightDiagonal, cur, board):
         print("❌ No solution exists.")
