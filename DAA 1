@@ -20,7 +20,7 @@ def fibonacci_recursive(n):
     else:
         fib_series = fibonacci_recursive(n - 1)
         fib_series.append(fib_series[-1] + fib_series[-2]) 
-    return fib_series
+        return fib_series
     
 print("Recursive", fibonacci_recursive(n))
 
