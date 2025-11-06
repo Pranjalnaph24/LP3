@@ -23,3 +23,13 @@ def fibonacci_recursive(n):
     return fib_series
     
 print("Recursive", fibonacci_recursive(n))
+
+#n = int(input("enter the fibonscci num :"))
+#start =time.perf_counter()
+#print("\n Non recursive : " , Fibonacci(n))
+#end = time.perf_counter()
+#print(f"\n time taken is  {end - start } seconds")
+#start =time.perf_counter()
+#print("\n  recursive : " , fibonacci_recursive(n))
+#end = time.perf_counter()
+#print(f"\n time taken is  {end - start } seconds")
